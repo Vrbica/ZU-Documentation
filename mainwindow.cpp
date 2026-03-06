@@ -393,7 +393,9 @@ void MainWindow::onStartClicked()
 {
     QString partNumber = m_partNumberEdit->text().trimmed();
     if (partNumber.isEmpty()) {
-        setStatus("Enter or scan a part number first", "#ffb300");
+        QMessageBox::warning(this, "Missing Part Number",
+            "Please enter or scan a part number before starting.");
+        m_partNumberEdit->setFocus();
         return;
     }
 
@@ -505,7 +507,9 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
 {
     switch (event->key()) {
     case Qt::Key_Escape:
-        qApp->quit();
+        if (QMessageBox::question(this, "Exit", "Exit the application?",
+                QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)
+            qApp->quit();
         break;
     case Qt::Key_Return:
     case Qt::Key_Enter:
