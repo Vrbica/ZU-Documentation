@@ -137,7 +137,9 @@ void MainWindow::buildUi()
     m_partNumberEdit->setObjectName("inputField");
     m_partNumberEdit->setPlaceholderText("Scan or enter part number...");
     m_partNumberEdit->setFixedHeight(48);
-    connect(m_partNumberEdit, &QLineEdit::textChanged, this, &MainWindow::onPartNumberChanged);
+    connect(m_partNumberEdit, &QLineEdit::textChanged,   this, &MainWindow::onPartNumberChanged);
+    // Barcode scanners send Enter after the code — auto-start immediately
+    connect(m_partNumberEdit, &QLineEdit::returnPressed, this, &MainWindow::onStartClicked);
 
     QLabel* pathLabel = new QLabel("Save Path");
     pathLabel->setObjectName("inputLabel");

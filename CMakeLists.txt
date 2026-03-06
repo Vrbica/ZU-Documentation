@@ -11,7 +11,8 @@ find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
 
 set(EDSDK_DIR "${CMAKE_SOURCE_DIR}/EDSDK")
 
-add_executable(ZU_Documentation
+# WIN32 hides the console window in release builds
+add_executable(ZU_Documentation WIN32
     main.cpp
     mainwindow.cpp
     mainwindow.h
@@ -30,10 +31,24 @@ target_link_libraries(ZU_Documentation PRIVATE
     "${EDSDK_DIR}/x64/EDSDK.lib"
 )
 
-# Copy EDSDK DLLs next to the executable
+# ---- Post-build: copy Canon SDK DLLs ----
 add_custom_command(TARGET ZU_Documentation POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${EDSDK_DIR}/x64/EDSDK.dll"
         "${EDSDK_DIR}/x64/EdsImage.dll"
         $<TARGET_FILE_DIR:ZU_Documentation>
+    COMMENT "Copying Canon SDK DLLs..."
 )
+
+# ---- Post-build: deploy Qt DLLs (windeployqt) ----
+find_program(WINDEPLOYQT windeployqt HINTS "${Qt6_DIR}/../../../bin")
+if(WINDEPLOYQT)
+    add_custom_command(TARGET ZU_Documentation POST_BUILD
+        COMMAND "${WINDEPLOYQT}"
+            --no-translations
+            --no-system-d3d-compiler
+            --no-opengl-sw
+            $<TARGET_FILE:ZU_Documentation>
+        COMMENT "Running windeployqt..."
+    )
+endif()
