@@ -9,7 +9,7 @@
       "binaryDir": "${sourceDir}/build/release",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "Qt6_DIR": "C:/Qt/6.7.0/msvc2019_64/lib/cmake/Qt6"
+        "Qt6_DIR": "C:/Qt/6.10.2/msvc2022_64/lib/cmake/Qt6"
       }
     },
     {
@@ -20,7 +20,7 @@
       "binaryDir": "${sourceDir}/build/debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "Qt6_DIR": "C:/Qt/6.7.0/msvc2019_64/lib/cmake/Qt6"
+        "Qt6_DIR": "C:/Qt/6.10.2/msvc2022_64/lib/cmake/Qt6"
       }
     }
   ],
