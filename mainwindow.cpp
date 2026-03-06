@@ -173,8 +173,7 @@ void MainWindow::buildUi()
     m_cameraPreview = new QLabel("No camera connected\nConnect via USB and press Start");
     m_cameraPreview->setObjectName("cameraPreview");
     m_cameraPreview->setAlignment(Qt::AlignCenter);
-    m_cameraPreview->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
-    m_cameraPreview->setMinimumSize(320, 240);
+    m_cameraPreview->setFixedSize(640, 480);
 
     m_captureBtn = new QPushButton("Capture Photo  [Space]");
     m_captureBtn->setObjectName("captureBtn");
