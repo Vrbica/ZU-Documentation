@@ -105,6 +105,16 @@ void CanonController::stopCapture() {
         onStatus("Capture stopped. " + std::to_string(m_imageCounter) + " image(s) saved.");
 }
 
+bool CanonController::triggerCapture() {
+    if (!m_sessionOpen || !m_capturing) return false;
+    EdsError err = EdsSendCommand(m_camera, kEdsCameraCommand_TakePicture, 0);
+    if (err != EDS_ERR_OK) {
+        if (onError) onError("Shutter trigger failed (code " + std::to_string(err) + ")");
+        return false;
+    }
+    return true;
+}
+
 // ---------------------------------------------------------------------------
 bool CanonController::startLiveView()
 {

@@ -36,6 +36,7 @@ public:
 
     void startCapture();
     void stopCapture();
+    bool triggerCapture();   // Remotely fire the shutter via SDK
 
     bool startLiveView();    // Enable EVF stream to PC
     void stopLiveView();     // Disable EVF stream

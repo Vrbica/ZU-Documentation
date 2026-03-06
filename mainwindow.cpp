@@ -434,9 +434,9 @@ void MainWindow::onStartClicked()
 // ---------------------------------------------------------------------------
 void MainWindow::onCaptureClicked()
 {
-    // With Canon SDK, photos are triggered from the camera body.
-    // This button is a placeholder for tethered capture trigger if needed.
-    logAction("Manual capture triggered (use camera shutter to take photo)");
+    if (m_ctrl.triggerCapture()) {
+        logAction("Shutter triggered remotely.");
+    }
 }
 
 // ---------------------------------------------------------------------------
