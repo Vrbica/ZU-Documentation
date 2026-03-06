@@ -62,6 +62,7 @@ private:
 
     // --- Backend ---
     CanonController m_ctrl;
-    QTimer*         m_pumpTimer   = nullptr;
-    bool            m_sessionActive = false;
+    QTimer*         m_pumpTimer      = nullptr;
+    QTimer*         m_liveViewTimer  = nullptr;
+    bool            m_sessionActive  = false;
 };

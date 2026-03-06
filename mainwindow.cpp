@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 
 #include <QApplication>
+#include <vector>
 #include <QKeyEvent>
 #include <QFileInfo>
 #include <QPixmap>
@@ -41,10 +42,28 @@ MainWindow::MainWindow(QWidget* parent)
         }, Qt::QueuedConnection);
     };
 
-    // SDK pump timer
+    m_ctrl.onLiveViewFrame = [this](const std::vector<uint8_t>& jpeg) {
+        QMetaObject::invokeMethod(this, [this, jpeg]() {
+            QPixmap pix;
+            if (pix.loadFromData(jpeg.data(), static_cast<int>(jpeg.size()), "JPEG")) {
+                m_cameraPreview->setPixmap(
+                    pix.scaled(m_cameraPreview->size(),
+                               Qt::KeepAspectRatio,
+                               Qt::SmoothTransformation));
+            }
+        }, Qt::QueuedConnection);
+    };
+
+    // SDK pump timer (event processing)
     m_pumpTimer = new QTimer(this);
     connect(m_pumpTimer, &QTimer::timeout, this, &MainWindow::onPumpTimer);
     m_pumpTimer->start(50);
+
+    // Live view frame grab timer (~30 fps)
+    m_liveViewTimer = new QTimer(this);
+    connect(m_liveViewTimer, &QTimer::timeout, this, [this]() {
+        m_ctrl.grabLiveViewFrame();
+    });
 
     // Initialize SDK
     if (!m_ctrl.initialize()) {
@@ -388,12 +407,19 @@ void MainWindow::onStartClicked()
 
     m_ctrl.startCapture();
 
+    // Start live view — if the camera doesn't support it just show a message
+    if (m_ctrl.startLiveView()) {
+        m_liveViewTimer->start(33);   // ~30 fps
+        m_cameraPreview->clear();
+    } else {
+        m_cameraPreview->setText("Live View not available for this camera.\nTake photos with the camera shutter.");
+    }
+
     m_partNumberEdit->setEnabled(false);
     m_savePathEdit->setEnabled(false);
     m_startBtn->setEnabled(false);
     m_captureBtn->setEnabled(true);
     m_finishedBtn->setEnabled(true);
-    m_cameraPreview->setText("Camera connected\nTake photos with the camera\nor press Capture Photo");
     m_sessionActive = true;
 
     setStatus("Capturing for part: " + partNumber, "#00c853");
@@ -428,7 +454,11 @@ void MainWindow::onFinishedClicked()
 // ---------------------------------------------------------------------------
 void MainWindow::resetForNextPart()
 {
-    if (m_ctrl.isCapturing()) m_ctrl.stopCapture();
+    if (m_ctrl.isCapturing())      m_ctrl.stopCapture();
+    if (m_ctrl.isLiveViewActive()) {
+        m_liveViewTimer->stop();
+        m_ctrl.stopLiveView();
+    }
 
     m_thumbnailList->clear();
     m_partNumberEdit->clear();
@@ -437,6 +467,7 @@ void MainWindow::resetForNextPart()
     m_startBtn->setEnabled(true);
     m_captureBtn->setEnabled(false);
     m_finishedBtn->setEnabled(false);
+    m_cameraPreview->setPixmap(QPixmap());
     m_cameraPreview->setText("No camera connected\nConnect via USB and press Start");
     m_sessionActive = false;
 

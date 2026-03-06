@@ -106,6 +106,90 @@ void CanonController::stopCapture() {
 }
 
 // ---------------------------------------------------------------------------
+bool CanonController::startLiveView()
+{
+    if (!m_sessionOpen || m_liveViewActive) return false;
+
+    // Enable EVF mode on the camera body
+    EdsUInt32 evfMode = 1;
+    EdsError err = EdsSetPropertyData(m_camera, kEdsPropID_Evf_Mode,
+                                      0, sizeof(evfMode), &evfMode);
+    if (err != EDS_ERR_OK) {
+        if (onError) onError("Cannot enable Live View mode (code " + std::to_string(err) + ")");
+        return false;
+    }
+
+    // Route the EVF stream to the PC (keep camera screen on as well)
+    EdsUInt32 device = kEdsEvfOutputDevice_PC | kEdsEvfOutputDevice_TFT;
+    err = EdsSetPropertyData(m_camera, kEdsPropID_Evf_OutputDevice,
+                             0, sizeof(device), &device);
+    if (err != EDS_ERR_OK) {
+        if (onError) onError("Cannot set EVF output device (code " + std::to_string(err) + ")");
+        return false;
+    }
+
+    m_liveViewActive = true;
+    if (onStatus) onStatus("Live View started.");
+    return true;
+}
+
+void CanonController::stopLiveView()
+{
+    if (!m_sessionOpen || !m_liveViewActive) return;
+
+    // Route stream back to camera screen only
+    EdsUInt32 device = kEdsEvfOutputDevice_TFT;
+    EdsSetPropertyData(m_camera, kEdsPropID_Evf_OutputDevice,
+                       0, sizeof(device), &device);
+
+    // Disable EVF mode
+    EdsUInt32 evfMode = 0;
+    EdsSetPropertyData(m_camera, kEdsPropID_Evf_Mode,
+                       0, sizeof(evfMode), &evfMode);
+
+    m_liveViewActive = false;
+    if (onStatus) onStatus("Live View stopped.");
+}
+
+void CanonController::grabLiveViewFrame()
+{
+    if (!m_sessionOpen || !m_liveViewActive) return;
+
+    // Create an in-memory stream to receive the JPEG frame
+    EdsStreamRef memStream = nullptr;
+    EdsError err = EdsCreateMemoryStream(0, &memStream);
+    if (err != EDS_ERR_OK) return;
+
+    // Create EVF image ref and download
+    EdsEvfImageRef evfImage = nullptr;
+    err = EdsCreateEvfImageRef(memStream, &evfImage);
+    if (err != EDS_ERR_OK) {
+        EdsRelease(memStream);
+        return;
+    }
+
+    err = EdsDownloadEvfImage(m_camera, evfImage);
+    EdsRelease(evfImage);
+
+    if (err == EDS_ERR_OK) {
+        // Copy JPEG bytes out of the stream
+        EdsUInt64 length = 0;
+        EdsGetLength(memStream, &length);
+
+        if (length > 0 && onLiveViewFrame) {
+            EdsVoid* ptr = nullptr;
+            EdsGetPointer(memStream, &ptr);
+            std::vector<uint8_t> jpeg(
+                reinterpret_cast<uint8_t*>(ptr),
+                reinterpret_cast<uint8_t*>(ptr) + static_cast<size_t>(length));
+            onLiveViewFrame(jpeg);
+        }
+    }
+
+    EdsRelease(memStream);
+}
+
+// ---------------------------------------------------------------------------
 void CanonController::pumpEvents() {
     EdsGetEvent();
 }
