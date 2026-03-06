@@ -82,6 +82,7 @@ MainWindow::~MainWindow()
 void MainWindow::buildUi()
 {
     setWindowTitle("ZU Documentation");
+    resize(1280, 800);
 
     QWidget* central = new QWidget(this);
     setCentralWidget(central);
@@ -172,7 +173,8 @@ void MainWindow::buildUi()
     m_cameraPreview = new QLabel("No camera connected\nConnect via USB and press Start");
     m_cameraPreview->setObjectName("cameraPreview");
     m_cameraPreview->setAlignment(Qt::AlignCenter);
-    m_cameraPreview->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    m_cameraPreview->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+    m_cameraPreview->setMinimumSize(320, 240);
 
     m_captureBtn = new QPushButton("Capture Photo  [Space]");
     m_captureBtn->setObjectName("captureBtn");
